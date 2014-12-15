@@ -136,6 +136,7 @@ Heap::Heap(size_t initial_size, size_t growth_limit, size_t min_free, size_t max
       zygote_creation_lock_("zygote creation lock", kZygoteCreationLock),
       have_zygote_space_(false),
       large_object_threshold_(std::numeric_limits<size_t>::max()),  // Starts out disabled.
+      gc_request_pending_(false),
       collector_type_running_(kCollectorTypeNone),
       last_gc_type_(collector::kGcTypeNone),
       next_gc_type_(collector::kGcTypePartial),
@@ -387,6 +388,8 @@ Heap::Heap(size_t initial_size, size_t growth_limit, size_t min_free, size_t max
   gc_complete_lock_ = new Mutex("GC complete lock");
   gc_complete_cond_.reset(new ConditionVariable("GC complete condition variable",
                                                 *gc_complete_lock_));
+  gc_request_lock_ = new Mutex("GC request lock");
+  gc_request_cond_.reset(new ConditionVariable("GC request condition variable", *gc_request_lock_));
   heap_trim_request_lock_ = new Mutex("Heap trim request lock");
   last_gc_size_ = GetBytesAllocated();
   if (ignore_max_footprint_) {
@@ -2963,12 +2966,7 @@ void Heap::RequestConcurrentGC(Thread* self) {
   // We already have a request pending, no reason to start more until we update
   // concurrent_start_bytes_.
   concurrent_start_bytes_ = std::numeric_limits<size_t>::max();
-  JNIEnv* env = self->GetJniEnv();
-  DCHECK(WellKnownClasses::java_lang_Daemons != nullptr);
-  DCHECK(WellKnownClasses::java_lang_Daemons_requestGC != nullptr);
-  env->CallStaticVoidMethod(WellKnownClasses::java_lang_Daemons,
-                            WellKnownClasses::java_lang_Daemons_requestGC);
-  CHECK(!env->ExceptionCheck());
+  NotifyConcurrentGCRequest(self);
 }
 
 void Heap::ConcurrentGC(Thread* self) {
@@ -3201,6 +3199,22 @@ void Heap::ClearMarkedObjects() {
   for (const auto& space : GetDiscontinuousSpaces()) {
     space->GetMarkBitmap()->Clear();
   }
+}
+
+void Heap::WaitForConcurrentGCRequest(Thread* self) {
+  ScopedThreadStateChange tsc(self, kBlocked);
+  MutexLock mu(self, *gc_request_lock_);
+  while (!gc_request_pending_) {
+    gc_request_cond_->Wait(self);
+  }
+  gc_request_pending_ = false;
+}
+
+void Heap::NotifyConcurrentGCRequest(Thread* self) {
+  ScopedThreadStateChange tsc(self, kBlocked);
+  MutexLock mu(self, *gc_request_lock_);
+  gc_request_pending_ = true;
+  gc_request_cond_->Signal(self);
 }
 
 }  // namespace gc
