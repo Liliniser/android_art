@@ -1002,6 +1002,7 @@ void Runtime::RegisterRuntimeNativeMethods(JNIEnv* env) {
   REGISTER(register_org_apache_harmony_dalvik_ddmc_DdmServer);
   REGISTER(register_org_apache_harmony_dalvik_ddmc_DdmVmInternal);
   REGISTER(register_sun_misc_Unsafe);
+  REGISTER(register_samsung_native_methods);
 #undef REGISTER
 }
 
