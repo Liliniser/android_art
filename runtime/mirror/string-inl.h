@@ -30,6 +30,11 @@ namespace mirror {
 
 inline uint32_t String::ClassSize() {
   uint32_t vtable_entries = Object::kVTableLength + 51;
+  if (IsSamsungROM()) {
+    // Samsung added a new method "string.clear()"
+    // Increase vtable length to support it
+    vtable_entries++;
+  }
   return Class::ComputeClassSize(true, vtable_entries, 1, 1, 2);
 }
 
