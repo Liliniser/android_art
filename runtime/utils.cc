@@ -1388,4 +1388,14 @@ std::string PrettyDescriptor(Primitive::Type type) {
   return PrettyDescriptor(Primitive::Descriptor(type));
 }
 
+bool IsSamsungROM() {
+  static bool checked = false;
+  static bool result = false;
+  if (!checked) {
+    result = OS::FileExists("/system/framework/twframework.jar");
+    checked = true;
+  }
+  return result;
+}
+
 }  // namespace art

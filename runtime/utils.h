@@ -515,6 +515,8 @@ struct FreeDelete {
 template <typename T>
 using UniqueCPtr = std::unique_ptr<T, FreeDelete>;
 
+bool IsSamsungROM();
+
 }  // namespace art
 
 #endif  // ART_RUNTIME_UTILS_H_
