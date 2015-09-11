@@ -628,7 +628,7 @@ static size_t OpenDexFiles(const std::vector<const char*>& dex_filenames,
       continue;
     }
     std::unique_ptr<File> file;
-    if (EndsWith(dex_filename, ".oat") || EndsWith(dex_filename, ".odex")) {
+    if (EndsWith(dex_filename, ".oat") || EndsWith(dex_filename, ".odex") || EndsWith(dex_filename, ".odex.xposed")) {
       file.reset(OS::OpenFileForReading(dex_filename));
       if (file.get() == nullptr) {
         LOG(WARNING) << "Failed to open file '" << dex_filename << "': " << strerror(errno);
@@ -1420,7 +1420,7 @@ static int dex2oat(int argc, char** argv) {
     if (dex_filenames.empty()) {
       odex_filename = DexFilenameToOdexFilename(zip_location, instruction_set);
       if (!OS::FileExists(odex_filename.c_str())) {
-        odex_filename += ".gz.xposed";
+        odex_filename = GetRenamedOdexFileName(odex_filename);
       }
       if (OS::FileExists(odex_filename.c_str())) {
         LOG(INFO) << "Using '" << odex_filename << "' instead of file descriptor";
