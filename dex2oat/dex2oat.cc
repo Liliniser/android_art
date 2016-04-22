@@ -743,14 +743,14 @@ static size_t OpenDexFiles(const std::vector<const char*>& dex_filenames,
       continue;
     }
     std::unique_ptr<File> file;
-    if (EndsWith(dex_filename, ".oat") || EndsWith(dex_filename, ".odex") || EndsWith(dex_filename, ".odex.xposed")) {
+    if (EndsWith(dex_filename, ".oat") || EndsWith(dex_filename, ".odex")) {
       file.reset(OS::OpenFileForReading(dex_filename));
       if (file.get() == nullptr) {
         LOG(WARNING) << "Failed to open file '" << dex_filename << "': " << strerror(errno);
         ++failure_count;
         continue;
       }
-    } else if (EndsWith(dex_filename, ".gz.xposed")) {
+    } else if (EndsWith(dex_filename, ".gz")) {
       file.reset(Inflate(dex_filename, swap_fd, &error_msg));
       if (file.get() == nullptr) {
         LOG(WARNING) << "Failed to inflate " << dex_filename << "': " << error_msg;
@@ -758,7 +758,7 @@ static size_t OpenDexFiles(const std::vector<const char*>& dex_filenames,
         continue;
       }
       swap_fd = -1;
-    } else if (EndsWith(dex_filename, ".xz.xposed")) {
+    } else if (EndsWith(dex_filename, ".xz")) {
       file.reset(InflateXZ(dex_filename, swap_fd, &error_msg));
       if (file.get() == nullptr) {
         LOG(WARNING) << "Failed to inflate " << dex_filename << "': " << error_msg;

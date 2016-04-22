@@ -1399,18 +1399,13 @@ bool IsSamsungROM() {
 }
 
 std::string GetRenamedOdexFileName(std::string odex_filename) {
-  std::string filename (odex_filename + ".gz.xposed");
+  std::string filename (odex_filename + ".gz");
   if (OS::FileExists(filename.c_str())) {
     return filename;
   } else {
-    filename = odex_filename + ".xz.xposed";
+    filename = odex_filename + ".xz";
     if (OS::FileExists(filename.c_str())) {
       return filename;
-    } else {
-      filename = odex_filename + ".xposed";
-      if (OS::FileExists(filename.c_str())) {
-        return filename;
-      }
     }
   }
 
