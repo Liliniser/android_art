@@ -2407,6 +2407,13 @@ class JNI {
         m = c->FindVirtualMethod(name, sig);
       }
       if (m == nullptr) {
+        if ((PrettyDescriptor(c) == "java.lang.Runtime" && (strcmp(name, "appStartupBegin") == 0 || strcmp(name, "appStartupEnd") == 0)) ||
+            (PrettyDescriptor(c) == "dalvik.system.VMRuntime" && (strcmp(name, "requestConcurrentGC") == 0 || strcmp(name, "waitForConcurrentGCRequest") == 0))
+            ) {
+          LOG(INFO) << "Native method " << PrettyDescriptor(c) << "." << name << sig
+              << " not found in " << c->GetDexCache()->GetLocation()->ToModifiedUtf8() << ", but which is expected.";
+          continue;
+        }
         c->DumpClass(LOG(ERROR), mirror::Class::kDumpClassFullDetail);
         LOG(return_errors ? ERROR : FATAL) << "Failed to register native method "
             << PrettyDescriptor(c) << "." << name << sig << " in "

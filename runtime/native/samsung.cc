@@ -237,6 +237,16 @@ static jobject PathClassLoader_openNative(JNIEnv* env, jobject javaThis) {
   return nullptr;
 }
 
+//----------------------------------------------------
+// java.lang.Runtime
+
+static void Runtime_appStartupBegin(JNIEnv* env, jobject javaThis) {
+  // Do nothing
+}
+
+static void Runtime_appStartupEnd(JNIEnv* env, jobject javaThis) {
+  // Do nothing
+}
 
 //----------------------------------------------------
 static JNINativeMethod gMethodsClass[] = {
@@ -258,6 +268,10 @@ static JNINativeMethod gMethodsPathClassLoader[] = {
   NATIVE_METHOD(PathClassLoader, openNative, "!(Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ldalvik/system/PathClassLoader;"),
 };
 
+static JNINativeMethod gMethodsRuntime[] = {
+  NATIVE_METHOD(Runtime, appStartupBegin, "!()V"),
+  NATIVE_METHOD(Runtime, appStartupEnd, "!()V"),
+};
 
 //----------------------------------------------------
 void register_samsung_native_methods(JNIEnv* env) {
@@ -268,6 +282,7 @@ void register_samsung_native_methods(JNIEnv* env) {
   RegisterNativeMethods(env, "java/lang/reflect/ArtField", gMethodsArtField, arraysize(gMethodsArtField));
   RegisterNativeMethods(env, "java/lang/reflect/ArtMethod", gMethodsArtMethod, arraysize(gMethodsArtMethod));
   RegisterNativeMethods(env, "dalvik/system/PathClassLoader", gMethodsPathClassLoader, arraysize(gMethodsPathClassLoader));
+  RegisterNativeMethods(env, "java/lang/Runtime", gMethodsRuntime, arraysize(gMethodsRuntime));
 }
 
 }  // namespace art

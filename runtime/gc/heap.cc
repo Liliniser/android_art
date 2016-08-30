@@ -103,6 +103,8 @@ static const char* kRosAllocSpaceName[2] = {"main rosalloc space", "main rosallo
 static const char* kMemMapSpaceName[2] = {"main space", "main space 1"};
 static constexpr size_t kGSSBumpPointerSpaceCapacity = 32 * MB;
 
+static jmethodID java_lang_Daemons_requestGC = NULL;
+
 Heap::Heap(size_t initial_size, size_t growth_limit, size_t min_free, size_t max_free,
            double target_utilization, double foreground_heap_growth_multiplier,
            size_t capacity, size_t non_moving_space_capacity, const std::string& image_file_name,
@@ -2966,7 +2968,24 @@ void Heap::RequestConcurrentGC(Thread* self) {
   // We already have a request pending, no reason to start more until we update
   // concurrent_start_bytes_.
   concurrent_start_bytes_ = std::numeric_limits<size_t>::max();
-  NotifyConcurrentGCRequest(self);
+
+  static bool checked = false;
+  if (!checked) {
+    checked = true;
+    JNIEnv* env = self->GetJniEnv();
+    java_lang_Daemons_requestGC = env->GetStaticMethodID(WellKnownClasses::java_lang_Daemons, "requestGC", "()V");
+    if (env->ExceptionCheck()) {
+      env->ExceptionClear();
+    }
+  }
+
+  if (java_lang_Daemons_requestGC != nullptr) {
+    JNIEnv* env = self->GetJniEnv();
+    env->CallStaticVoidMethod(WellKnownClasses::java_lang_Daemons, java_lang_Daemons_requestGC);
+    CHECK(!env->ExceptionCheck());
+  } else {
+    NotifyConcurrentGCRequest(self);
+  }
 }
 
 void Heap::ConcurrentGC(Thread* self) {
