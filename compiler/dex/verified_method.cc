@@ -61,7 +61,7 @@ const VerifiedMethod* VerifiedMethod::Create(verifier::MethodVerifier* method_ve
     }
 
     if (!verified_method->GenerateDequickenMap(method_verifier)) {
-      return nullptr;
+      //return nullptr;
     }
   }
 
