@@ -31,6 +31,8 @@
 namespace art {
 namespace mirror {
 
+bool sDexCacheJavaClassHasExtraFields = false;
+
 void DexCache::Init(const DexFile* dex_file,
                     String* location,
                     ObjectArray<String>* strings,

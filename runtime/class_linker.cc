@@ -203,6 +203,25 @@ extern "C" void art_quick_resolution_trampoline(mirror::ArtMethod*);
 extern "C" void art_quick_imt_conflict_trampoline(mirror::ArtMethod*);
 extern "C" void art_quick_to_interpreter_bridge(mirror::ArtMethod*);
 
+static void dexCacheExtraFieldsWorkaround(const DexFile* dex_file) {
+  const DexFile::ClassDef* dex_class_def = dex_file->FindClassDef("Ljava/lang/DexCache;");
+  if (dex_class_def != nullptr) {
+    const byte* class_data = dex_file->GetClassData(*dex_class_def);
+    if (class_data != nullptr) {
+      for (ClassDataItemIterator it(*dex_file, class_data); it.HasNextInstanceField(); it.Next()) {
+        const DexFile::FieldId& field_id = dex_file->GetFieldId(it.GetMemberIndex());
+        const char* name = dex_file->GetFieldName(field_id);
+        // Additional fields are normally 'literals' and 'z_padding'.
+        // Some devices have only 'literals' (without 'z_padding') but they work the same.
+        if (strcmp(name, "literals") == 0) {
+          mirror::sDexCacheJavaClassHasExtraFields = true;
+          LOG(INFO) << "java.lang.DexCache compatibility mode";
+        }
+      }
+    }
+  }
+}
+
 void ClassLinker::InitWithoutImage(const std::vector<const DexFile*>& boot_class_path) {
   VLOG(startup) << "ClassLinker::Init";
   CHECK(!Runtime::Current()->GetHeap()->HasImageSpace()) << "Runtime has image. We should use it.";
@@ -356,9 +375,18 @@ void ClassLinker::InitWithoutImage(const std::vector<const DexFile*>& boot_class
   // DexCache instances. Needs to be after String, Field, Method arrays since AllocDexCache uses
   // these roots.
   CHECK_NE(0U, boot_class_path.size());
+
+  const char* core_libart_filename = "/system/framework/core-libart.jar";
   for (size_t i = 0; i != boot_class_path.size(); ++i) {
     const DexFile* dex_file = boot_class_path[i];
     CHECK(dex_file != nullptr);
+
+    // TODO: Workaround for DexCache extra fields. Could this be better?
+    if (IsSamsungROM() && dex_file->GetLocation() == core_libart_filename) {
+      dexCacheExtraFieldsWorkaround(dex_file);
+      java_lang_DexCache->SetObjectSize(mirror::DexCache::InstanceSize());
+    }
+
     AppendToBootClassPath(*dex_file);
   }
 
@@ -1654,6 +1682,15 @@ void ClassLinker::InitFromImage() {
 
   CHECK_EQ(oat_file.GetOatHeader().GetDexFileCount(),
            static_cast<uint32_t>(dex_caches->GetLength()));
+
+  // TODO: Workaround for DexCache extra fields. Could this be better?
+  if (IsSamsungROM()) {
+    const OatFile::OatDexFile* oat_dex_file = oat_file.GetOatDexFile("/system/framework/core-libart.jar", nullptr);
+    std::string error_msg;
+    const DexFile* dex_file = oat_dex_file->OpenDexFile(&error_msg);
+    dexCacheExtraFieldsWorkaround(dex_file);
+  }
+
   for (int32_t i = 0; i < dex_caches->GetLength(); i++) {
     StackHandleScope<1> hs(self);
     Handle<mirror::DexCache> dex_cache(hs.NewHandle(dex_caches->Get(i)));
