@@ -216,6 +216,7 @@ static void dexCacheExtraFieldsWorkaround(const DexFile* dex_file) {
         if (strcmp(name, "literals") == 0) {
           mirror::sDexCacheJavaClassHasExtraFields = true;
           LOG(INFO) << "java.lang.DexCache compatibility mode";
+          break;
         }
       }
     }
@@ -382,7 +383,7 @@ void ClassLinker::InitWithoutImage(const std::vector<const DexFile*>& boot_class
     CHECK(dex_file != nullptr);
 
     // TODO: Workaround for DexCache extra fields. Could this be better?
-    if (IsSamsungROM() && dex_file->GetLocation() == core_libart_filename) {
+    if (dex_file->GetLocation() == core_libart_filename) {
       dexCacheExtraFieldsWorkaround(dex_file);
       java_lang_DexCache->SetObjectSize(mirror::DexCache::InstanceSize());
     }
@@ -1684,12 +1685,10 @@ void ClassLinker::InitFromImage() {
            static_cast<uint32_t>(dex_caches->GetLength()));
 
   // TODO: Workaround for DexCache extra fields. Could this be better?
-  if (IsSamsungROM()) {
-    const OatFile::OatDexFile* oat_dex_file = oat_file.GetOatDexFile("/system/framework/core-libart.jar", nullptr);
-    std::string error_msg;
-    const DexFile* dex_file = oat_dex_file->OpenDexFile(&error_msg);
-    dexCacheExtraFieldsWorkaround(dex_file);
-  }
+  const OatFile::OatDexFile* oat_dex_file_tmp = oat_file.GetOatDexFile("/system/framework/core-libart.jar", nullptr);
+  std::string error_msg_tmp;
+  const DexFile* dex_file_tmp = oat_dex_file_tmp->OpenDexFile(&error_msg_tmp);
+  dexCacheExtraFieldsWorkaround(dex_file_tmp);
 
   for (int32_t i = 0; i < dex_caches->GetLength(); i++) {
     StackHandleScope<1> hs(self);

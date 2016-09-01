@@ -2411,7 +2411,7 @@ class JNI {
             (PrettyDescriptor(c) == "dalvik.system.VMRuntime" && (strcmp(name, "requestConcurrentGC") == 0 || strcmp(name, "waitForConcurrentGCRequest") == 0))
             ) {
           LOG(INFO) << "Native method " << PrettyDescriptor(c) << "." << name << sig
-              << " not found in " << c->GetDexCache()->GetLocation()->ToModifiedUtf8() << ", but which is expected.";
+              << " not found in " << c->GetDexCache()->GetLocation()->ToModifiedUtf8();
           continue;
         }
         c->DumpClass(LOG(ERROR), mirror::Class::kDumpClassFullDetail);
