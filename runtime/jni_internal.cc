@@ -2410,7 +2410,7 @@ class JNI {
         if ((PrettyDescriptor(c) == "java.lang.Runtime" && (strcmp(name, "appStartupBegin") == 0 || strcmp(name, "appStartupEnd") == 0)) ||
             (PrettyDescriptor(c) == "dalvik.system.VMRuntime" && (strcmp(name, "requestConcurrentGC") == 0 || strcmp(name, "waitForConcurrentGCRequest") == 0))
             ) {
-          LOG(INFO) << "Native method " << PrettyDescriptor(c) << "." << name << sig
+          LOG(WARNING) << "Native method " << PrettyDescriptor(c) << "." << name << sig
               << " not found in " << c->GetDexCache()->GetLocation()->ToModifiedUtf8();
           continue;
         }
